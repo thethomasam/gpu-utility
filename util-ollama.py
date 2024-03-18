@@ -11,13 +11,14 @@ start = time.time()
 
 
 def chat_with_bot(text):
-    response = ollama.chat(model='mistral', messages=[
-      {
-        'role': 'user',
-        'content': text,
-        'stream': False
-      },
-    ])
+    # response = ollama.generate(model='mistral', messages=[
+    #   {
+    #     'role': 'user',
+    #     'content': text,
+    #     'stream': False
+    #   },
+    # ])
+    response= ollama.generate(model='mistral', prompt=text)
     return response
 
 
@@ -33,12 +34,18 @@ def record_resource_utilisation(prompts_by_bin):
       logger_pid = subprocess.Popen(
         ['python3', 'log_gpu_cpu_stats.py',
         logger_fname,
-        '--loop',  '0.8',  # Interval between measurements, in seconds (optional, default=1)
+        '--loop',  '0.2',  # Interval between measurements, in seconds (optional, default=1)
         ])
-      for i in prompts:
-        response=chat_with_bot(i)
+      prompts=prompts[0:10]
 
+      for i in prompts:
+        start=time.time()
+        response=chat_with_bot(i)
+        end=time.time()
+        print(end-start)
+        print('response done')
       logger_pid.terminate()
+
       print('Done Logging')
       break
     
@@ -51,4 +58,4 @@ if __name__ == "__main__":
   prompts_by_bin = df.groupby('bin_number')['prompt'].apply(list)
   # print(prompts_by_bin)
   print(len(prompts_by_bin[16]))
-  # record_resource_utilisation(prompts_by_bin)
+  record_resource_utilisation(prompts_by_bin)
